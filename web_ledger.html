@@ -1,0 +1,515 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记账本</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f0f2f5; color: #333;
+            min-height: 100vh;
+        }
+
+        .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+
+        h1 { font-size: 22px; margin-bottom: 4px; }
+
+        /* ===== 登录面板 ===== */
+        #authPanel {
+            max-width: 360px; margin: 80px auto 0;
+            background: white; padding: 32px;
+            border-radius: 8px; border: 1px solid #e8e8e8;
+        }
+
+        #authPanel h2 { font-size: 20px; margin-bottom: 24px; text-align: center; }
+
+        #authPanel input {
+            width: 100%; padding: 10px 14px; font-size: 14px;
+            border: 1px solid #d0d0d0; border-radius: 6px; outline: none;
+            margin-bottom: 12px;
+        }
+
+        #authPanel input:focus { border-color: #4a90d9; }
+
+        #authPanel button {
+            width: 100%; padding: 10px; font-size: 15px;
+            background: #4a90d9; color: white;
+            border: none; border-radius: 6px; cursor: pointer; margin-top: 4px;
+        }
+
+        #authPanel button:hover { background: #357abd; }
+
+        #authPanel .switch {
+            text-align: center; margin-top: 16px;
+            font-size: 13px; color: #666;
+        }
+
+        #authPanel .switch a { color: #4a90d9; cursor: pointer; text-decoration: none; }
+
+        #authPanel .error { color: #e94560; font-size: 13px; margin-bottom: 12px; display: none; }
+
+        /* ===== 隐藏/显示 ===== */
+        .hidden { display: none !important; }
+
+        /* ===== 顶部栏 ===== */
+        .topbar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .topbar .user-info { font-size: 14px; color: #666; }
+
+        .topbar .logout-btn {
+            background: none; border: 1px solid #d0d0d0;
+            padding: 6px 16px; border-radius: 6px;
+            font-size: 13px; cursor: pointer; color: #666;
+        }
+
+        .topbar .logout-btn:hover { border-color: #e94560; color: #e94560; }
+
+        /* ===== 表单 ===== */
+        .form-row {
+            display: flex; gap: 10px; margin-bottom: 20px;
+            align-items: flex-end; flex-wrap: wrap;
+        }
+
+        .form-row input, .form-row select {
+            padding: 8px 10px; font-size: 14px;
+            border: 1px solid #d0d0d0; border-radius: 6px; outline: none;
+        }
+
+        .form-row input:focus, .form-row select:focus { border-color: #4a90d9; }
+
+        #dateInput { width: 130px; }
+        #typeSelect { width: 80px; }
+        #tagSelect { width: 100px; }
+        #itemInput { flex: 1; min-width: 140px; }
+        #amountInput { width: 110px; }
+
+        #addBtn {
+            padding: 8px 20px; font-size: 14px;
+            background: #4a90d9; color: white;
+            border: none; border-radius: 6px; cursor: pointer;
+        }
+
+        #addBtn:hover { background: #357abd; }
+
+        /* ===== 筛选标签 ===== */
+        .tabs {
+            display: flex; gap: 0; margin-bottom: 16px;
+            border: 1px solid #d0d0d0; border-radius: 6px;
+            overflow: hidden; width: fit-content;
+        }
+
+        .tabs button {
+            padding: 6px 20px; font-size: 13px;
+            border: none; background: white; cursor: pointer;
+            border-right: 1px solid #d0d0d0; color: #555;
+        }
+
+        .tabs button:last-child { border-right: none; }
+
+        .tabs button.active { background: #4a90d9; color: white; }
+
+        /* ===== 统计区 ===== */
+        .stats {
+            display: flex; gap: 24px; margin-bottom: 24px;
+            padding: 16px 20px; background: white;
+            border-radius: 8px; border: 1px solid #e8e8e8;
+        }
+
+        .stat-item { text-align: center; min-width: 80px; }
+
+        .stat-item .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+
+        .stat-item .value { font-size: 22px; font-weight: 600; }
+
+        .stat-item .value.income { color: #27ae60; }
+
+        .stat-item .value.expense { color: #e94560; }
+
+        /* ===== 分类条 ===== */
+        .tag-bars { margin-bottom: 24px; }
+
+        .tag-bar-row {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 6px; font-size: 13px;
+        }
+
+        .tag-bar-row .tag-name { width: 60px; color: #666; text-align: right; }
+
+        .tag-bar-row .bar-wrap {
+            flex: 1; background: #e8e8e8; border-radius: 4px;
+            height: 18px; overflow: hidden;
+        }
+
+        .bar-wrap .bar {
+            height: 100%; border-radius: 4px;
+            background: #e94560; min-width: 1px;
+        }
+
+        .tag-bar-row .tag-amount { width: 80px; color: #333; }
+
+        /* ===== 记录列表 ===== */
+        .records-table {
+            width: 100%; border-collapse: collapse;
+            background: white; border-radius: 8px;
+            overflow: hidden; border: 1px solid #e8e8e8;
+        }
+
+        .records-table th {
+            text-align: left; padding: 10px 14px;
+            background: #f8f9fa; font-size: 13px; color: #666;
+            border-bottom: 1px solid #e8e8e8; font-weight: 500;
+        }
+
+        .records-table td {
+            padding: 10px 14px; font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .records-table .type-tag {
+            display: inline-block; padding: 2px 8px;
+            border-radius: 3px; font-size: 12px;
+        }
+
+        .type-tag.income { background: #e6f7e6; color: #27ae60; }
+
+        .type-tag.expense { background: #fce4e8; color: #e94560; }
+
+        .records-table .amount-col { font-weight: 500; text-align: right; }
+
+        .amount-col.income { color: #27ae60; }
+
+        .amount-col.expense { color: #e94560; }
+
+        .records-table .del-btn {
+            background: none; border: none; color: #ccc;
+            font-size: 16px; cursor: pointer; padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .records-table .del-btn:hover { color: #e94560; background: #fce4e8; }
+
+        .empty-hint { text-align: center; color: #999; padding: 40px 0; font-size: 14px; }
+
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 10px 24px;
+            border-radius: 6px; font-size: 13px; display: none; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录/注册面板 -->
+    <div id="authPanel">
+        <h2 id="authTitle">登录</h2>
+        <div id="authError" class="error"></div>
+        <input id="authUsername" placeholder="用户名" autofocus>
+        <input id="authPassword" type="password" placeholder="密码">
+        <button id="authBtn">登 录</button>
+        <div class="switch">
+            没有账号？<a id="switchLink">去注册</a>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="mainPanel" class="hidden">
+        <div class="wrap">
+            <div class="topbar">
+                <div>
+                    <h1>记账本</h1>
+                    <span class="user-info" id="userLabel"></span>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">退出</button>
+            </div>
+
+            <div class="form-row">
+                <input id="dateInput" type="date">
+                <select id="typeSelect">
+                    <option value="支出">支出</option>
+                    <option value="收入">收入</option>
+                </select>
+                <select id="tagSelect">
+                    <option value="餐饮">餐饮</option>
+                    <option value="交通">交通</option>
+                    <option value="购物">购物</option>
+                    <option value="住房">住房</option>
+                    <option value="娱乐">娱乐</option>
+                    <option value="工资">工资</option>
+                    <option value="兼职">兼职</option>
+                    <option value="其他">其他</option>
+                </select>
+                <input id="itemInput" placeholder="备注（选填）">
+                <input id="amountInput" type="number" placeholder="金额" step="0.01" min="0">
+                <button id="addBtn">记一笔</button>
+            </div>
+
+            <div class="tabs">
+                <button class="active" data-type="">全部</button>
+                <button data-type="收入">收入</button>
+                <button data-type="支出">支出</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="label">本月收入</div>
+                    <div class="value income" id="statIncome">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">本月支出</div>
+                    <div class="value expense" id="statExpense">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">本月结余</div>
+                    <div class="value" id="statBalance">0</div>
+                </div>
+            </div>
+
+            <div class="tag-bars" id="tagBars"></div>
+
+            <table class="records-table">
+                <thead>
+                    <tr>
+                        <th>日期</th><th>类型</th><th>分类</th>
+                        <th>备注</th><th class="amount-col">金额</th><th style="width:36px"></th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API = "http://localhost:8000";
+        let currentType = "";
+        let isRegister = false;
+
+        // ====== 登录/注册 ======
+        const authPanel = document.getElementById("authPanel");
+        const mainPanel = document.getElementById("mainPanel");
+        const authTitle = document.getElementById("authTitle");
+        const authError = document.getElementById("authError");
+        const authUsername = document.getElementById("authUsername");
+        const authPassword = document.getElementById("authPassword");
+        const authBtn = document.getElementById("authBtn");
+        const switchLink = document.getElementById("switchLink");
+
+        // 切换登录/注册模式
+        switchLink.addEventListener("click", function() {
+            isRegister = !isRegister;
+            authTitle.textContent = isRegister ? "注册" : "登录";
+            authBtn.textContent = isRegister ? "注 册" : "登 录";
+            switchLink.textContent = isRegister ? "去登录" : "去注册";
+            authError.style.display = "none";
+        });
+
+        // 登录/注册提交
+        authBtn.addEventListener("click", handleAuth);
+        authPassword.addEventListener("keypress", function(e) { if (e.key === "Enter") handleAuth(); });
+
+        async function handleAuth() {
+            var user = authUsername.value.trim();
+            var pass = authPassword.value.trim();
+            if (!user || !pass) { showAuthError("请填写用户名和密码"); return; }
+
+            var url = API + (isRegister ? "/register" : "/login");
+            try {
+                var res = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: user, password: pass }),
+                });
+                var data = await res.json();
+                if (data.ok) {
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("username", data.username);
+                    showMain();
+                } else {
+                    showAuthError(data.error);
+                }
+            } catch {
+                showAuthError("无法连接后端");
+            }
+        }
+
+        function showAuthError(msg) {
+            authError.textContent = msg;
+            authError.style.display = "block";
+        }
+
+        function handleLogout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("username");
+            showAuth();
+        }
+
+        function showAuth() {
+            authPanel.classList.remove("hidden");
+            mainPanel.classList.add("hidden");
+        }
+
+        function showMain() {
+            authPanel.classList.add("hidden");
+            mainPanel.classList.remove("hidden");
+            document.getElementById("userLabel").textContent = "欢迎，" + localStorage.getItem("username");
+            refresh();
+        }
+
+        // ====== 记账功能（同之前，加 Authorization 头） ======
+        function authHeaders() {
+            return { "Content-Type": "application/json", "Authorization": "Bearer " + localStorage.getItem("token") };
+        }
+
+        var el = {
+            date: document.getElementById("dateInput"),
+            type: document.getElementById("typeSelect"),
+            tag: document.getElementById("tagSelect"),
+            item: document.getElementById("itemInput"),
+            amount: document.getElementById("amountInput"),
+            addBtn: document.getElementById("addBtn"),
+            recordsBody: document.getElementById("recordsBody"),
+            statIncome: document.getElementById("statIncome"),
+            statExpense: document.getElementById("statExpense"),
+            statBalance: document.getElementById("statBalance"),
+            tagBars: document.getElementById("tagBars"),
+            toast: document.getElementById("toast"),
+        };
+
+        el.date.value = new Date().toISOString().slice(0, 10);
+
+        el.type.addEventListener("change", function() {
+            var incomeTags = ["工资", "兼职", "理财", "其他"];
+            var expenseTags = ["餐饮", "交通", "购物", "住房", "娱乐", "其他"];
+            var tags = el.type.value === "收入" ? incomeTags : expenseTags;
+            el.tag.innerHTML = tags.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join("");
+        });
+
+        document.querySelectorAll(".tabs button").forEach(function(btn) {
+            btn.addEventListener("click", function() {
+                document.querySelectorAll(".tabs button").forEach(function(b) { b.classList.remove("active"); });
+                btn.classList.add("active");
+                currentType = btn.dataset.type;
+                refresh();
+            });
+        });
+
+        el.addBtn.addEventListener("click", addRecord);
+        el.amount.addEventListener("keypress", function(e) { if (e.key === "Enter") addRecord(); });
+
+        async function addRecord() {
+            var amount = parseFloat(el.amount.value);
+            if (!amount || amount <= 0) { showToast("请输入有效金额"); return; }
+
+            try {
+                var res = await fetch(API + "/records", {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        date: el.date.value, type: el.type.value,
+                        tag: el.tag.value, item: el.item.value, amount: amount,
+                    }),
+                });
+                if (res.ok) {
+                    el.item.value = "";
+                    el.amount.value = "";
+                    refresh();
+                }
+            } catch { showToast("添加失败"); }
+        }
+
+        async function deleteRecord(id) {
+            try {
+                var res = await fetch(API + "/records/" + id, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                });
+                if (res.ok) refresh();
+            } catch { showToast("删除失败"); }
+        }
+
+        function refresh() { loadRecords(); loadStats(); }
+
+        async function loadRecords() {
+            var url = API + "/records";
+            if (currentType) url += "?type=" + currentType;
+
+            try {
+                var res = await fetch(url, { headers: authHeaders() });
+                var records = await res.json();
+                renderRecords(records);
+            } catch { showToast("无法加载数据"); }
+        }
+
+        async function loadStats() {
+            try {
+                var res = await fetch(API + "/records/stats", { headers: authHeaders() });
+                var stats = await res.json();
+                renderStats(stats);
+            } catch { /* ignore */ }
+        }
+
+        function renderRecords(records) {
+            if (!records || records.length === 0) {
+                el.recordsBody.innerHTML = '<tr><td colspan="6" class="empty-hint">暂无记录，记一笔吧</td></tr>';
+                return;
+            }
+            var html = "";
+            for (var i = 0; i < records.length; i++) {
+                var r = records[i];
+                var tc = r.type === "收入" ? "income" : "expense";
+                html += '<tr>';
+                html += '<td>' + r.date + '</td>';
+                html += '<td><span class="type-tag ' + tc + '">' + r.type + '</span></td>';
+                html += '<td>' + r.tag + '</td>';
+                html += '<td>' + (r.item || "-") + '</td>';
+                html += '<td class="amount-col ' + tc + '">' + r.amount.toFixed(2) + '</td>';
+                html += '<td><button class="del-btn" onclick="deleteRecord(' + r.id + ')">✕</button></td>';
+                html += '</tr>';
+            }
+            el.recordsBody.innerHTML = html;
+        }
+
+        function renderStats(stats) {
+            var m = stats.monthly;
+            el.statIncome.textContent = m["收入"].toFixed(2);
+            el.statExpense.textContent = m["支出"].toFixed(2);
+            el.statBalance.textContent = (m["收入"] - m["支出"]).toFixed(2);
+
+            var tags = stats.expense_by_tag || [];
+            if (tags.length === 0) { el.tagBars.innerHTML = ""; return; }
+
+            var max = tags[0].amount;
+            var html = "";
+            for (var i = 0; i < tags.length; i++) {
+                var pct = max > 0 ? (tags[i].amount / max * 100) : 0;
+                html += '<div class="tag-bar-row">';
+                html += '<span class="tag-name">' + tags[i].tag + '</span>';
+                html += '<div class="bar-wrap"><div class="bar" style="width:' + pct + '%"></div></div>';
+                html += '<span class="tag-amount">' + tags[i].amount.toFixed(2) + '</span>';
+                html += '</div>';
+            }
+            el.tagBars.innerHTML = html;
+        }
+
+        function showToast(msg) {
+            el.toast.textContent = msg;
+            el.toast.style.display = "block";
+            setTimeout(function() { el.toast.style.display = "none"; }, 2500);
+        }
+
+        // ====== 启动 ======
+        var token = localStorage.getItem("token");
+        if (token) {
+            showMain();
+        } else {
+            showAuth();
+        }
+    </script>
+</body>
+</html>

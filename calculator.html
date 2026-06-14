@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>计算器</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .calc {
+            background: #1a1a2e;
+            padding: 24px;
+            border-radius: 12px;
+            width: 280px;
+        }
+
+        #display {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 16px;
+            font-size: 28px;
+            text-align: right;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            background: #e8f0fe;
+            color: #1a1a2e;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            flex: 1;
+            padding: 16px 0;
+            font-size: 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #16213e;
+            color: #e0e0e0;
+            transition: background 0.15s;
+        }
+
+        button:hover { background: #0f3460; }
+        button.op { background: #e94560; }
+        button.op:hover { background: #c73e54; }
+        button.eq { background: #0f3460; }
+        button.eq:hover { background: #1a4a8a; }
+    </style>
+</head>
+<body>
+    <div class="calc">
+        <input id="display" value="0" readonly>
+
+        <div class="row">
+            <button onclick="press('7')">7</button>
+            <button onclick="press('8')">8</button>
+            <button onclick="press('9')">9</button>
+            <button class="op" onclick="press('/')">/</button>
+        </div>
+        <div class="row">
+            <button onclick="press('4')">4</button>
+            <button onclick="press('5')">5</button>
+            <button onclick="press('6')">6</button>
+            <button class="op" onclick="press('*')">*</button>
+        </div>
+        <div class="row">
+            <button onclick="press('1')">1</button>
+            <button onclick="press('2')">2</button>
+            <button onclick="press('3')">3</button>
+            <button class="op" onclick="press('-')">-</button>
+        </div>
+        <div class="row">
+            <button onclick="press('0')">0</button>
+            <button onclick="press('.')">.</button>
+            <button onclick="clearDisplay()">C</button>
+            <button class="op" onclick="press('+')">+</button>
+        </div>
+        <div class="row">
+            <button class="eq" onclick="calculate()" style="flex:4">=</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        let current = '0';
+
+        function press(key) {
+            if (current === '0' && key !== '.') {
+                current = key;
+            } else {
+                current += key;
+            }
+            display.value = current;
+        }
+
+        function clearDisplay() {
+            current = '0';
+            display.value = current;
+        }
+
+        function calculate() {
+            try {
+                current = String(eval(current));
+            } catch {
+                current = 'Error';
+            }
+            display.value = current;
+        }
+    </script>
+</body>
+</html>

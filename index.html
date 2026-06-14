@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>我的主页</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 18px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+            margin-top: 32px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #1967d2;
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin: 4px;
+            font-size: 14px;
+        }
+
+        .contact {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .toggle-theme {
+            float: right;
+            background: none;
+            border: 1px solid #ccc;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        body.dark {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark .card {
+            background: #16213e;
+        }
+
+        body.dark h2 {
+            border-bottom-color: #444;
+        }
+
+        body.dark .tag {
+            background: #1a3a5c;
+            color: #7ec8e3;
+        }
+
+        body.dark .toggle-theme {
+            border-color: #555;
+            color: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <button class="toggle-theme">暗色模式</button>
+        <h1>碧瑶</h1>
+        <p>我是鬼王宗宗主之女</p>
+
+        <h2>关于我</h2>
+        <p>写一段自我介绍</p>
+
+        <h2>技能</h2>
+        <span class="tag">Python</span>
+        <span class="tag">HTML</span>
+        <span class="tag">CSS</span>
+
+        <h2>项目</h2>
+        <ul>
+            <li>猜数字游戏</li>
+            <li>Todo 工具</li>
+            <li>记账本</li>
+        </ul>
+
+        <h2>联系方式</h2>
+        <p class="contact">邮箱：yourname@example.com</p>
+    </div>
+
+    <script>
+        const btn = document.querySelector('.toggle-theme');
+
+        btn.addEventListener('click', function() {
+            document.body.classList.toggle('dark');
+
+            if (document.body.classList.contains('dark')) {
+                btn.textContent = '亮色模式';
+            } else {
+                btn.textContent = '暗色模式';
+            }
+        });
+    </script>
+</body>
+</html>

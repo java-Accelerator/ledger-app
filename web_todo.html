@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>Web Todo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            padding-top: 60px;
+        }
+
+        .container {
+            width: 440px;
+            background: white;
+            border-radius: 10px;
+            padding: 28px;
+        }
+
+        h1 { font-size: 22px; margin-bottom: 20px; }
+
+        .input-row {
+            display: flex; gap: 8px; margin-bottom: 24px;
+        }
+
+        #taskInput {
+            flex: 1; padding: 10px 14px; font-size: 15px;
+            border: 1px solid #d0d0d0; border-radius: 6px; outline: none;
+        }
+
+        #taskInput:focus { border-color: #4a90d9; }
+
+        #addBtn {
+            padding: 10px 20px; font-size: 15px;
+            background: #4a90d9; color: white;
+            border: none; border-radius: 6px; cursor: pointer;
+        }
+
+        #addBtn:hover { background: #357abd; }
+
+        .todo-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; border: 1px solid #eee;
+            border-radius: 6px; margin-bottom: 8px;
+        }
+
+        .toggle-btn {
+            width: 28px; height: 28px; border-radius: 50%;
+            border: 2px solid #ccc; background: none;
+            font-size: 16px; cursor: pointer; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: #999;
+        }
+
+        .toggle-btn.done {
+            border-color: #27ae60; background: #27ae60; color: white;
+        }
+
+        .todo-item .task { flex: 1; font-size: 15px; }
+
+        .todo-item .task.done {
+            text-decoration: line-through; color: #999;
+        }
+
+        .delete-btn {
+            background: none; border: none; color: #e94560;
+            font-size: 18px; cursor: pointer; padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .delete-btn:hover { background: #fce4e8; }
+
+        .empty { text-align: center; color: #999; padding: 24px 0; font-size: 14px; }
+
+        .error-msg {
+            background: #fff0f0; color: #c0392b; padding: 10px 14px;
+            border-radius: 6px; margin-bottom: 16px; font-size: 13px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>待办事项</h1>
+
+        <div id="errorMsg" class="error-msg"></div>
+
+        <div class="input-row">
+            <input id="taskInput" placeholder="输入待办事项" autofocus>
+            <button id="addBtn">添加</button>
+        </div>
+
+        <div id="todoList"></div>
+    </div>
+
+    <script>
+        const API = "http://localhost:8000";
+
+        const taskInput = document.getElementById("taskInput");
+        const addBtn = document.getElementById("addBtn");
+        const todoList = document.getElementById("todoList");
+        const errorMsg = document.getElementById("errorMsg");
+
+        loadTodos();
+
+        addBtn.addEventListener("click", addTodo);
+        taskInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") addTodo();
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = "block";
+            setTimeout(function() { errorMsg.style.display = "none"; }, 3000);
+        }
+
+        async function loadTodos() {
+            try {
+                const res = await fetch(API + "/todos");
+                const todos = await res.json();
+                renderTodos(todos);
+            } catch {
+                showError("无法连接后端，请确认 uvicorn 已启动");
+            }
+        }
+
+        async function addTodo() {
+            const task = taskInput.value.trim();
+            if (!task) return;
+
+            try {
+                const res = await fetch(API + "/todos", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ task: task }),
+                });
+                if (res.ok) {
+                    taskInput.value = "";
+                    loadTodos();
+                }
+            } catch {
+                showError("添加失败");
+            }
+        }
+
+        async function deleteTodo(index) {
+            try {
+                const res = await fetch(API + "/todos/" + index, { method: "DELETE" });
+                if (res.ok) loadTodos();
+            } catch {
+                showError("删除失败");
+            }
+        }
+
+        async function toggleTodo(index) {
+            try {
+                const res = await fetch(API + "/todos/" + index, { method: "PUT" });
+                if (res.ok) loadTodos();
+            } catch {
+                showError("操作失败");
+            }
+        }
+
+        function renderTodos(todos) {
+            if (!todos || todos.length === 0) {
+                todoList.innerHTML = '<div class="empty">暂无待办</div>';
+                return;
+            }
+
+            let html = "";
+            for (let i = 0; i < todos.length; i++) {
+                const t = todos[i];
+                const doneClass = t.done ? " done" : "";
+                html += '<div class="todo-item">';
+                html += '<button class="toggle-btn' + doneClass + '" onclick="toggleTodo(' + t.id + ')">✓</button>';
+                html += '<span class="task' + doneClass + '">' + t.task + '</span>';
+                html += '<button class="delete-btn" onclick="deleteTodo(' + t.id + ')">✕</button>';
+                html += '</div>';
+            }
+            todoList.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
