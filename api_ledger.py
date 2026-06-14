@@ -1,5 +1,6 @@
 ﻿import sqlite3, hashlib, secrets, os
 from fastapi import FastAPI, Query, Header, HTTPException, Depends
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -51,6 +52,11 @@ def init_db():
     conn.close()
 
 init_db()
+
+# 提供前端页面
+@app.get("/")
+def serve_frontend():
+    return FileResponse("web_ledger.html")
 
 # ====== 密码工具 ======
 def hash_password(password: str) -> str:
