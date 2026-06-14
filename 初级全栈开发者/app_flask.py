@@ -166,7 +166,11 @@ def delete_record(record_id):
 def stats():
     user = get_current_user()
     if not user:
-        return jsonify({"monthly": {"收入": 0, "支出": 0}, "expense_by_tag": []}), 401
+        return jsonify({
+            "monthly": {"收入": 0, "支出": 0},
+            "income_by_tag": [],
+            "expense_by_tag": [],
+        }), 401
     db = get_db()
     rows = db.execute("""
         SELECT type, SUM(amount) FROM records
@@ -178,12 +182,22 @@ def stats():
         monthly[r[0]] = round(r[1], 2)
     rows = db.execute("""
         SELECT tag, SUM(amount) FROM records
+        WHERE type = '收入' AND date >= date('now', 'start of month') AND user_id = ?
+        GROUP BY tag ORDER BY SUM(amount) DESC
+    """, (user["id"],)).fetchall()
+    income_tags = [{"tag": r[0] if r[0] else "其他", "amount": round(r[1], 2)} for r in rows]
+    rows = db.execute("""
+        SELECT tag, SUM(amount) FROM records
         WHERE type = '支出' AND date >= date('now', 'start of month') AND user_id = ?
         GROUP BY tag ORDER BY SUM(amount) DESC
     """, (user["id"],)).fetchall()
-    tags = [{"tag": r[0] if r[0] else "其他", "amount": round(r[1], 2)} for r in rows]
+    expense_tags = [{"tag": r[0] if r[0] else "其他", "amount": round(r[1], 2)} for r in rows]
     db.close()
-    return jsonify({"monthly": monthly, "expense_by_tag": tags})
+    return jsonify({
+        "monthly": monthly,
+        "income_by_tag": income_tags,
+        "expense_by_tag": expense_tags,
+    })
 
 if __name__ == "__main__":
     app.run()

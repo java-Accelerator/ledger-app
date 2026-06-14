@@ -122,6 +122,8 @@ def test_stats(setup):
     stats = res.json()
     assert stats["monthly"]["收入"] == 3000
     assert stats["monthly"]["支出"] == 80
+    assert stats["income_by_tag"] == [{"tag": "工资", "amount": 3000}]
+    assert stats["expense_by_tag"] == [{"tag": "餐饮", "amount": 80}]
 
 def test_empty_records(setup):
     res = client.get("/records", headers=auth_headers(setup["token"]))

@@ -208,14 +208,27 @@ def get_stats(user: dict = Depends(get_current_user)):
 
         rows = db.execute("""
             SELECT tag, SUM(amount) FROM records
+            WHERE type = '收入' AND date >= date('now', 'start of month') AND user_id = ?
+            GROUP BY tag ORDER BY SUM(amount) DESC
+        """, (user["id"],)).fetchall()
+        income_tags = []
+        for tag, s in rows:
+            income_tags.append({"tag": tag if tag else "其他", "amount": round(s, 2)})
+
+        rows = db.execute("""
+            SELECT tag, SUM(amount) FROM records
             WHERE type = '支出' AND date >= date('now', 'start of month') AND user_id = ?
             GROUP BY tag ORDER BY SUM(amount) DESC
         """, (user["id"],)).fetchall()
-        tags = []
+        expense_tags = []
         for tag, s in rows:
-            tags.append({"tag": tag if tag else "其他", "amount": round(s, 2)})
+            expense_tags.append({"tag": tag if tag else "其他", "amount": round(s, 2)})
 
-        return {"monthly": monthly, "expense_by_tag": tags}
+        return {
+            "monthly": monthly,
+            "income_by_tag": income_tags,
+            "expense_by_tag": expense_tags,
+        }
     finally:
         db.close()
 
